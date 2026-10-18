@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CTR Rater</title>
+  <meta name="description" content="Estimate the click-through rate of a Roblox experience thumbnail.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="./">CTR Rater</a>
+      <span class="header-note">Thumbnail analysis for Roblox experiences</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <h1>How clickable is your thumbnail?</h1>
+      <p>Upload a Roblox experience thumbnail to get an estimated click-through rate and a breakdown of what helps it and what holds it back.</p>
+    </section>
+
+    <input type="file" id="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+    <section id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload a thumbnail">
+      <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <p class="dz-title" id="dz-title">Drop an image here, or <span class="link">browse</span></p>
+      <p class="dz-sub" id="dz-sub">PNG, JPG or WebP. 1920 × 1080 recommended. You can also paste from the clipboard.</p>
+    </section>
+
+    <section id="history" class="card history" hidden>
+      <div class="card-head">
+        <h2>Your thumbnails</h2>
+        <button type="button" class="btn-ghost" id="clear">Clear all</button>
+      </div>
+      <ul class="history-list" id="history-list"></ul>
+    </section>
+
+    <section id="results" class="results" hidden>
+      <div class="col">
+        <div class="card">
+          <div class="card-head">
+            <h2>Thumbnail</h2>
+            <label class="switch">
+              <input type="checkbox" id="attention">
+              <span>Attention map</span>
+            </label>
+          </div>
+          <div class="preview" id="preview">
+            <img id="preview-img" alt="Uploaded thumbnail">
+            <canvas id="overlay" aria-hidden="true"></canvas>
+          </div>
+          <dl class="meta" id="meta"></dl>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>In the feed</h2>
+            <div class="seg" role="group" aria-label="Feed background">
+              <button type="button" data-theme="dark" aria-pressed="true">Dark</button>
+              <button type="button" data-theme="light" aria-pressed="false">Light</button>
+            </div>
+          </div>
+          <label class="field">
+            <span>Experience name</span>
+            <input type="text" id="title-input" value="My Experience" maxlength="50">
+          </label>
+          <div class="feed-stage dark" id="feed-stage">
+            <div class="tile">
+              <div class="tile-label">Desktop</div>
+              <div class="tile-img"><img alt=""></div>
+              <div class="tile-title"></div>
+              <div class="tile-stats">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>91%</span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>2.4K</span>
+              </div>
+            </div>
+            <div class="tile small">
+              <div class="tile-label">Mobile</div>
+              <div class="tile-img"><img alt=""></div>
+              <div class="tile-title"></div>
+              <div class="tile-stats">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>91%</span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>2.4K</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card score-card">
+          <p class="eyebrow">Estimated CTR</p>
+          <p class="ctr"><span id="ctr-value">0.0</span><span class="pct">%</span></p>
+          <p class="range" id="ctr-range"></p>
+          <div class="scale">
+            <div class="scale-track" id="scale-track"><span></span><span></span><span></span><span></span></div>
+            <div class="scale-marker" id="scale-marker"></div>
+          </div>
+          <div class="scale-labels" id="scale-labels">
+            <span>Below average<small>&lt; 3%</small></span>
+            <span>Average<small>3–6%</small></span>
+            <span>Good<small>6–9%</small></span>
+            <span>Strong<small>9%+</small></span>
+          </div>
+          <p class="verdict" id="verdict"></p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Breakdown</h2>
+            <span class="muted-sm" id="overall"></span>
+          </div>
+          <ul class="factors" id="factors"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Suggestions</h2></div>
+          <ol class="tips" id="tips"></ol>
+        </div>
+      </div>
+    </section>
+
+    <section id="campaign" class="card campaign" hidden>
+      <div class="card-head">
+        <div>
+          <h2>Ad campaign estimate</h2>
+          <p class="card-sub">Enter your sponsored ad settings to project traffic using this thumbnail’s estimated CTR.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Currency">
+          <button type="button" data-currency="USD" aria-pressed="true">USD</button>
+          <button type="button" data-currency="Robux" aria-pressed="false">Robux</button>
+        </div>
+      </div>
+
+      <form class="ad-form" id="ad-form" autocomplete="off">
+        <label class="field">
+          <span>Daily budget</span>
+          <div class="input-unit"><input type="number" name="budget" min="0" step="any" value="50" inputmode="decimal"><em data-unit="currency">USD</em></div>
+        </label>
+        <label class="field">
+          <span>Cost per 1,000 impressions</span>
+          <div class="input-unit"><input type="number" name="cpm" min="0.01" step="any" value="1.5" inputmode="decimal"><em data-unit="currency">USD</em></div>
+        </label>
+        <label class="field">
+          <span>Campaign length</span>
+          <div class="input-unit"><input type="number" name="days" min="1" step="1" value="7" inputmode="numeric"><em>days</em></div>
+        </label>
+        <label class="field">
+          <span>Click to play rate</span>
+          <div class="input-unit"><input type="number" name="playRate" min="1" max="100" step="any" value="60" inputmode="decimal"><em>%</em></div>
+        </label>
+        <label class="field">
+          <span>Average session length</span>
+          <div class="input-unit"><input type="number" name="session" min="0.1" step="any" value="12" inputmode="decimal"><em>min</em></div>
+        </label>
+        <label class="field">
+          <span>Day 1 retention</span>
+          <div class="input-unit"><input type="number" name="retention" min="0" max="100" step="any" value="15" inputmode="decimal"><em>%</em></div>
+        </label>
+      </form>
+
+      <dl class="stats" id="stats"></dl>
+
+      <p class="fine-print">Use the CPM from your Ads Manager reports for the most accurate numbers. Ranges come from the CTR range above. CCU assumes ad traffic is spread across the day, with peak at roughly twice the average.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Everything runs in your browser. Your images are never uploaded anywhere.</p>
+      <p>The estimate is based only on what the image looks like. Real CTR also depends on your icon, title, genre and where Roblox places your experience, so use it to compare thumbnails, not as a guarantee.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
